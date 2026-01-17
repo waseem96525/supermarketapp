@@ -1269,6 +1269,74 @@
             font-weight: 600;
         }
 
+        /* ===== INVOICE STYLES ===== */
+        .quick-filter-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid var(--light-gray);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray);
+        }
+
+        .quick-filter-btn:hover, .quick-filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .invoice-card {
+            background: white;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            padding: 20px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .invoice-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .invoice-card.exchanged {
+            border-left: 4px solid var(--warning);
+            background: #fff9e6;
+        }
+
+        .invoice-card.refunded {
+            border-left: 4px solid var(--danger);
+            background: #ffe6e6;
+        }
+
+        .invoice-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .invoice-badge.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .invoice-badge.exchanged {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .invoice-badge.refunded {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .categories-list {
             display: grid;
             gap: 12px;
@@ -2346,6 +2414,9 @@
         <div class="nav-tabs">
             <button class="nav-tab active" data-tab="pos" onclick="switchTab('pos')">🛒 POS</button>
             <button class="nav-tab" data-tab="inventory" onclick="switchTab('inventory')">📦 Inventory</button>
+            <button class="nav-tab" data-tab="invoices" onclick="switchTab('invoices')">� Invoices</button>
+            <button class="nav-tab" data-tab="expenses" onclick="switchTab('expenses')">💰 Expenses</button>
+            <button class="nav-tab" data-tab="suppliers" onclick="switchTab('suppliers')">🏪 Suppliers</button>
             <button class="nav-tab" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
             <button class="nav-tab" data-tab="admin" onclick="switchTab('admin')">🔐 Admin</button>
             <button class="nav-tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</button>
@@ -2549,6 +2620,16 @@
                     <div class="input-group">
                         <label>Initial Stock *</label>
                         <input type="number" id="productQty" placeholder="0" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Min Stock Threshold <span style="font-size: 0.85rem; color: var(--gray);">(Low Stock Alert)</span></label>
+                        <input type="number" id="productMinStock" placeholder="10" min="0" value="10">
+                    </div>
+                    <div class="input-group">
+                        <label>Supplier <span style="font-size: 0.85rem; color: var(--gray);">(Optional)</span></label>
+                        <select id="productSupplier">
+                            <option value="">-- Select Supplier --</option>
+                        </select>
                     </div>
                     <div class="input-group" style="grid-column: 1 / -1;">
                         <label>Profit Margin</label>
@@ -2800,6 +2881,201 @@
                 </div>
             </div>
 
+            <!-- Invoices Section -->
+            <div id="invoices" class="section">
+                <h2 class="section-title">🧯 Invoice History & Search</h2>
+                
+                <!-- Search and Filters -->
+                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 15px; margin-bottom: 15px;">
+                        <div class="input-group" style="margin: 0;">
+                            <label style="font-size: 0.85rem; margin-bottom: 5px;">🔍 Search Invoice</label>
+                            <input type="text" id="invoiceSearch" placeholder="Invoice #, customer name, or amount" oninput="filterInvoices()" style="padding: 10px;">
+                        </div>
+                        <div class="input-group" style="margin: 0;">
+                            <label style="font-size: 0.85rem; margin-bottom: 5px;">From Date</label>
+                            <input type="date" id="invoiceDateFrom" onchange="filterInvoices()" style="padding: 10px;">
+                        </div>
+                        <div class="input-group" style="margin: 0;">
+                            <label style="font-size: 0.85rem; margin-bottom: 5px;">To Date</label>
+                            <input type="date" id="invoiceDateTo" onchange="filterInvoices()" style="padding: 10px;">
+                        </div>
+                        <div class="input-group" style="margin: 0;">
+                            <label style="font-size: 0.85rem; margin-bottom: 5px;">Payment Method</label>
+                            <select id="invoicePaymentFilter" onchange="filterInvoices()" style="padding: 10px;">
+                                <option value="all">All Methods</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Card">Card</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button onclick="clearInvoiceFilters()" class="btn btn-delete" style="padding: 10px 20px; white-space: nowrap;">❌ Clear</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="filterInvoicesByPeriod('today')" class="quick-filter-btn">Today</button>
+                        <button onclick="filterInvoicesByPeriod('week')" class="quick-filter-btn">This Week</button>
+                        <button onclick="filterInvoicesByPeriod('month')" class="quick-filter-btn">This Month</button>
+                        <button onclick="filterInvoicesByPeriod('all')" class="quick-filter-btn">All Time</button>
+                    </div>
+                </div>
+
+                <!-- Invoice Stats -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="totalInvoicesCount">0</div>
+                        <div class="stat-label">Total Invoices</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-value" id="totalInvoicesAmount">₹0.00</div>
+                        <div class="stat-label">Total Amount</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="completedInvoicesCount">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-value" id="exchangedInvoicesCount">0</div>
+                        <div class="stat-label">Exchanged</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-value" id="refundedInvoicesCount">0</div>
+                        <div class="stat-label">Refunded</div>
+                    </div>
+                </div>
+
+                <!-- Invoices List -->
+                <div id="invoicesList" style="display: grid; gap: 15px;">
+                    <!-- Invoices will be populated here -->
+                </div>
+            </div>
+
+            <!-- Expenses Section -->
+            <div id="expenses" class="section">
+                <h2 class="section-title">💰 Expense Tracking</h2>
+                
+                <!-- Add Expense Card -->
+                <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 20px; color: var(--dark);">➕ Record New Expense</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="input-group" style="margin: 0;">
+                            <label>Date</label>
+                            <input type="date" id="expenseDate">
+                        </div>
+                        <div class="input-group" style="margin: 0;">
+                            <label>Category</label>
+                            <select id="expenseCategory">
+                                <option value="Rent">🏢 Rent</option>
+                                <option value="Utilities">💡 Utilities</option>
+                                <option value="Salaries">👥 Salaries</option>
+                                <option value="Supplies">📦 Supplies</option>
+                                <option value="Maintenance">🔧 Maintenance</option>
+                                <option value="Transport">🚗 Transport</option>
+                                <option value="Marketing">📢 Marketing</option>
+                                <option value="Other">📝 Other</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin: 0;">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="expenseAmount" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        <div class="input-group" style="margin: 0;">
+                            <label>Description</label>
+                            <input type="text" id="expenseDescription" placeholder="e.g., Monthly electricity bill">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button onclick="addExpense()" class="add-product-btn" style="width: 100%; margin: 0;">➕ Add Expense</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense Stats -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">💸</div>
+                        <div class="stat-value" id="totalExpensesToday">₹0.00</div>
+                        <div class="stat-label">Today's Expenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-value" id="totalExpensesMonth">₹0.00</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💹</div>
+                        <div class="stat-value" id="profitThisMonth">₹0.00</div>
+                        <div class="stat-label">Net Profit (Month)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="cashFlow">₹0.00</div>
+                        <div class="stat-label">Cash Flow</div>
+                    </div>
+                </div>
+
+                <!-- Expense Filters -->
+                <div style="background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="filterExpensesByPeriod('today')" class="quick-filter-btn">Today</button>
+                        <button onclick="filterExpensesByPeriod('week')" class="quick-filter-btn">This Week</button>
+                        <button onclick="filterExpensesByPeriod('month')" class="quick-filter-btn active">This Month</button>
+                        <button onclick="filterExpensesByPeriod('all')" class="quick-filter-btn">All Time</button>
+                    </div>
+                </div>
+
+                <!-- Expenses List -->
+                <div id="expensesList">
+                    <!-- Expenses will be populated here -->
+                </div>
+            </div>
+
+            <!-- Suppliers Section -->
+            <div id="suppliers" class="section">
+                <h2 class="section-title">🏪 Supplier Management</h2>
+                
+                <!-- Add Supplier Button -->
+                <button onclick="showAddSupplierModal()" class="add-product-btn" style="margin-bottom: 20px;">
+                    ➕ Add New Supplier
+                </button>
+
+                <!-- Suppliers Stats -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏪</div>
+                        <div class="stat-value" id="totalSuppliersCount">0</div>
+                        <div class="stat-label">Total Suppliers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-value" id="totalPurchaseOrders">0</div>
+                        <div class="stat-label">Purchase Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-value" id="pendingPayments">0</div>
+                        <div class="stat-label">Pending Payments</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-value" id="totalPayableAmount">₹0.00</div>
+                        <div class="stat-label">Total Payable</div>
+                    </div>
+                </div>
+
+                <!-- Suppliers List -->
+                <div id="suppliersList" style="display: grid; gap: 15px;">
+                    <!-- Suppliers will be populated here -->
+                </div>
+            </div>
+
             <!-- Settings Section -->
             <div id="settings" class="section">
                 <div class="settings-card">
@@ -2881,6 +3157,25 @@
     <!-- Receipt Modal -->
     <div id="receiptModal" class="modal">
         <div class="receipt" id="receipt"></div>
+    </div>
+
+    <!-- Invoice Detail Modal -->
+    <div id="invoiceDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <span>📄 Invoice Details</span>
+                <button class="modal-close" onclick="closeInvoiceDetailModal()">×</button>
+            </div>
+            <div class="modal-body" id="invoiceDetailContent">
+                <!-- Invoice details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeInvoiceDetailModal()">Close</button>
+                <button class="modal-btn modal-btn-confirm" onclick="reprintInvoice()" style="background: var(--primary);">🖨️ Print Receipt</button>
+                <button class="modal-btn modal-btn-confirm" onclick="emailInvoice()" style="background: var(--success);">📧 Email</button>
+                <button class="modal-btn modal-btn-confirm" onclick="smsInvoice()" style="background: var(--warning);">📱 SMS</button>
+            </div>
+        </div>
     </div>
 
     <!-- Edit Product Modal -->
@@ -3049,6 +3344,109 @@
         </div>
     </div>
 
+    <!-- Add/Edit Supplier Modal -->
+    <div id="supplierModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <span id="supplierModalTitle">➕ Add Supplier</span>
+                <button class="modal-close" onclick="closeSupplierModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="supplierId">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>Supplier Name *</label>
+                        <input type="text" id="supplierName" placeholder="Enter supplier name">
+                    </div>
+                    <div class="input-group">
+                        <label>Contact Person</label>
+                        <input type="text" id="supplierContact" placeholder="Contact person name">
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number *</label>
+                        <input type="tel" id="supplierPhone" placeholder="1234567890">
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="supplierEmail" placeholder="supplier@example.com">
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <label>Address</label>
+                        <textarea id="supplierAddress" placeholder="Enter full address" rows="2"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Payment Terms (Days)</label>
+                        <input type="number" id="supplierPaymentTerms" placeholder="30" min="0" value="30">
+                    </div>
+                    <div class="input-group">
+                        <label>GST Number</label>
+                        <input type="text" id="supplierGST" placeholder="GST number">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeSupplierModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" onclick="saveSupplier()">💾 Save Supplier</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Order Modal -->
+    <div id="purchaseOrderModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <span>📦 Create Purchase Order</span>
+                <button class="modal-close" onclick="closePurchaseOrderModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="input-group" style="margin: 0;">
+                        <label>Supplier *</label>
+                        <select id="poSupplier">
+                            <option value="">-- Select Supplier --</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin: 0;">
+                        <label>Expected Delivery Date</label>
+                        <input type="date" id="poDeliveryDate">
+                    </div>
+                </div>
+                <div style="background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="margin-bottom: 10px;">Add Products to Order</h4>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                        <select id="poProduct" class="form-control">
+                            <option value="">-- Select Product --</option>
+                        </select>
+                        <input type="number" id="poQuantity" placeholder="Quantity" min="1" value="1" class="form-control">
+                        <input type="number" id="poUnitPrice" placeholder="Unit Price" step="0.01" min="0" class="form-control">
+                        <button onclick="addProductToPO()" class="btn btn-primary">➕ Add</button>
+                    </div>
+                </div>
+                <div id="poItemsList" style="margin-bottom: 15px;">
+                    <!-- PO items will be listed here -->
+                </div>
+                <div style="text-align: right; font-size: 1.2rem; font-weight: 700; color: var(--primary);">
+                    Total: <span id="poTotalAmount">₹0.00</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closePurchaseOrderModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" onclick="savePurchaseOrder()">📦 Create Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert Notification -->
+    <div id="lowStockAlert" style="position: fixed; top: 80px; right: 20px; background: #fff3cd; border-left: 4px solid #ff9800; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; display: none; max-width: 350px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+            <div style="font-weight: 600; color: #856404;">⚠️ Low Stock Alert</div>
+            <button onclick="closeLowStockAlert()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #856404;">&times;</button>
+        </div>
+        <div id="lowStockAlertContent" style="font-size: 0.9rem; color: #856404;">
+            <!-- Alert content will be populated here -->
+        </div>
+    </div>
+
     <!-- Barcode Modal -->
     <div id="barcodeModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
@@ -3081,18 +3479,29 @@
             TRANSACTIONS: 'supermarket_transactions',
             CATEGORIES: 'supermarket_categories',
             SHOP_DETAILS: 'supermarket_shop_details',
-            ADMIN_PIN: 'supermarket_admin_pin'
+            ADMIN_PIN: 'supermarket_admin_pin',
+            EXPENSES: 'supermarket_expenses',
+            SUPPLIERS: 'supermarket_suppliers',
+            PURCHASE_ORDERS: 'supermarket_purchase_orders'
         };
 
         let products = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS)) || [];
         let cart = [];
         let transactions = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) || [];
+        let expenses = JSON.parse(localStorage.getItem(STORAGE_KEYS.EXPENSES)) || [];
+        let suppliers = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUPPLIERS)) || [];
+        let purchaseOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.PURCHASE_ORDERS)) || [];
         let editingProductId = null;
         let selectedPaymentMethod = null;
         let nextProductId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+        let nextExpenseId = expenses.length > 0 ? Math.max(...expenses.map(e => e.id)) + 1 : 1;
+        let nextSupplierId = suppliers.length > 0 ? Math.max(...suppliers.map(s => s.id)) + 1 : 1;
+        let nextPOId = purchaseOrders.length > 0 ? Math.max(...purchaseOrders.map(po => po.id)) + 1 : 1;
         let adminAuthenticated = false;
         let adminPin = localStorage.getItem(STORAGE_KEYS.ADMIN_PIN) || '1234';
         let userRole = 'cashier'; // 'cashier' or 'admin'
+        let currentPOItems = [];
+        let editingSupplierId = null;
 
         let categories = JSON.parse(localStorage.getItem(STORAGE_KEYS.CATEGORIES)) || [
             { name: 'Vegetables', icon: '🥬' },
@@ -3356,9 +3765,20 @@
             switch(tabName) {
                 case 'pos':
                     renderProducts();
+                    checkLowStock();
                     break;
                 case 'inventory':
                     renderInventory();
+                    checkLowStock();
+                    break;
+                case 'invoices':
+                    renderInvoices();
+                    break;
+                case 'expenses':
+                    renderExpenses();
+                    break;
+                case 'suppliers':
+                    renderSuppliers();
                     break;
                 case 'dashboard':
                     renderDashboard();
@@ -4730,6 +5150,8 @@ TOTAL PAID: ${formatCurrency(total)}
 
             // Generate unique barcode
             const barcode = generateBarcode(nextProductId);
+            const minStock = parseInt(document.getElementById('productMinStock').value) || 10;
+            const supplierId = document.getElementById('productSupplier').value ? parseInt(document.getElementById('productSupplier').value) : null;
 
             // Add product
             products.push({
@@ -4742,6 +5164,8 @@ TOTAL PAID: ${formatCurrency(total)}
                 qty,
                 icon,
                 barcode,
+                minStock,
+                supplierId,
                 createdAt: new Date().toISOString()
             });
 
@@ -4749,6 +5173,7 @@ TOTAL PAID: ${formatCurrency(total)}
             clearProductForm();
             renderProducts();
             renderInventory();
+            checkLowStock();
             alert('✅ Product added successfully!');
         }
 
@@ -5434,6 +5859,899 @@ TOTAL PAID: ${formatCurrency(total)}
                 : '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--gray);">No transactions yet</td></tr>';
         }
 
+        // ===== INVOICE MANAGEMENT =====
+        let filteredInvoices = [];
+        let currentInvoiceId = null;
+
+        function renderInvoices() {
+            filteredInvoices = [...transactions].reverse(); // Show newest first
+            updateInvoiceStats();
+            displayInvoices();
+        }
+
+        function updateInvoiceStats() {
+            const totalCount = filteredInvoices.length;
+            const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.total, 0);
+            const completedCount = filteredInvoices.filter(inv => !inv.isExchanged && !inv.isRefunded).length;
+            const exchangedCount = filteredInvoices.filter(inv => inv.isExchanged).length;
+            const refundedCount = filteredInvoices.filter(inv => inv.isRefunded).length;
+
+            document.getElementById('totalInvoicesCount').textContent = totalCount;
+            document.getElementById('totalInvoicesAmount').textContent = formatCurrency(totalAmount);
+            document.getElementById('completedInvoicesCount').textContent = completedCount;
+            document.getElementById('exchangedInvoicesCount').textContent = exchangedCount;
+            document.getElementById('refundedInvoicesCount').textContent = refundedCount;
+        }
+
+        function displayInvoices() {
+            const container = document.getElementById('invoicesList');
+            
+            if (filteredInvoices.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 12px;">
+                        <div style="font-size: 4rem; margin-bottom: 15px;">📭</div>
+                        <div style="font-size: 1.3rem; font-weight: 600; color: var(--gray); margin-bottom: 8px;">No Invoices Found</div>
+                        <div style="color: var(--gray);">Try adjusting your filters or make a sale to create invoices</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredInvoices.map(invoice => {
+                const statusBadge = invoice.isRefunded 
+                    ? '<span class="invoice-badge refunded">🔴 Refunded</span>'
+                    : invoice.isExchanged 
+                    ? '<span class="invoice-badge exchanged">🔄 Exchanged</span>'
+                    : '<span class="invoice-badge completed">✅ Completed</span>';
+                
+                const cardClass = invoice.isRefunded ? 'refunded' : invoice.isExchanged ? 'exchanged' : '';
+                
+                return `
+                    <div class="invoice-card ${cardClass}" onclick="viewInvoiceDetail(${invoice.id})">
+                        <div style="display: grid; grid-template-columns: 1fr 2fr 1fr 1fr auto; gap: 20px; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">INVOICE #</div>
+                                <div style="font-weight: 700; font-size: 1.2rem; color: var(--primary);">${invoice.id.toString().padStart(8, '0')}</div>
+                                <div style="font-size: 0.8rem; color: var(--gray); margin-top: 4px;">${formatDate(invoice.date)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">ITEMS</div>
+                                <div style="font-weight: 600; margin-bottom: 5px;">${invoice.items.length} item${invoice.items.length > 1 ? 's' : ''}</div>
+                                <div style="font-size: 0.85rem; color: var(--gray);">
+                                    ${invoice.items.slice(0, 2).map(item => item.name).join(', ')}${invoice.items.length > 2 ? ' +' + (invoice.items.length - 2) + ' more' : ''}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">PAYMENT</div>
+                                <div style="font-weight: 600;">${invoice.paymentMethod}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">TOTAL AMOUNT</div>
+                                <div style="font-weight: 700; font-size: 1.4rem; color: var(--success);">${formatCurrency(invoice.total)}</div>
+                            </div>
+                            <div>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterInvoices() {
+            const searchTerm = document.getElementById('invoiceSearch').value.toLowerCase().trim();
+            const dateFrom = document.getElementById('invoiceDateFrom').value;
+            const dateTo = document.getElementById('invoiceDateTo').value;
+            const paymentFilter = document.getElementById('invoicePaymentFilter').value;
+
+            filteredInvoices = transactions.filter(invoice => {
+                // Search filter
+                const invoiceNumber = invoice.id.toString().padStart(8, '0');
+                const matchesSearch = !searchTerm || 
+                    invoiceNumber.includes(searchTerm) ||
+                    invoice.total.toString().includes(searchTerm) ||
+                    invoice.items.some(item => item.name.toLowerCase().includes(searchTerm));
+
+                // Date filters
+                const invoiceDate = new Date(invoice.date).toISOString().split('T')[0];
+                const matchesDateFrom = !dateFrom || invoiceDate >= dateFrom;
+                const matchesDateTo = !dateTo || invoiceDate <= dateTo;
+
+                // Payment filter
+                const matchesPayment = paymentFilter === 'all' || invoice.paymentMethod === paymentFilter;
+
+                return matchesSearch && matchesDateFrom && matchesDateTo && matchesPayment;
+            }).reverse();
+
+            updateInvoiceStats();
+            displayInvoices();
+        }
+
+        function filterInvoicesByPeriod(period) {
+            const today = new Date();
+            const dateFromInput = document.getElementById('invoiceDateFrom');
+            const dateToInput = document.getElementById('invoiceDateTo');
+
+            switch(period) {
+                case 'today':
+                    const todayStr = today.toISOString().split('T')[0];
+                    dateFromInput.value = todayStr;
+                    dateToInput.value = todayStr;
+                    break;
+                case 'week':
+                    const weekAgo = new Date(today);
+                    weekAgo.setDate(today.getDate() - 7);
+                    dateFromInput.value = weekAgo.toISOString().split('T')[0];
+                    dateToInput.value = today.toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    const monthAgo = new Date(today);
+                    monthAgo.setMonth(today.getMonth() - 1);
+                    dateFromInput.value = monthAgo.toISOString().split('T')[0];
+                    dateToInput.value = today.toISOString().split('T')[0];
+                    break;
+                case 'all':
+                    dateFromInput.value = '';
+                    dateToInput.value = '';
+                    break;
+            }
+            filterInvoices();
+        }
+
+        function clearInvoiceFilters() {
+            document.getElementById('invoiceSearch').value = '';
+            document.getElementById('invoiceDateFrom').value = '';
+            document.getElementById('invoiceDateTo').value = '';
+            document.getElementById('invoicePaymentFilter').value = 'all';
+            renderInvoices();
+        }
+
+        function viewInvoiceDetail(invoiceId) {
+            const invoice = transactions.find(inv => inv.id === invoiceId);
+            if (!invoice) return;
+
+            currentInvoiceId = invoiceId;
+
+            const statusInfo = invoice.isRefunded 
+                ? '<div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: 600;">🔴 This invoice has been refunded on ' + formatDate(invoice.refundedDate) + '</div>'
+                : invoice.isExchanged 
+                ? '<div style="background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: 600;">🔄 This invoice has been exchanged on ' + formatDate(invoice.exchangedDate) + '</div>'
+                : '';
+
+            document.getElementById('invoiceDetailContent').innerHTML = `
+                ${statusInfo}
+                <div style="border: 2px solid var(--light-gray); border-radius: 12px; padding: 25px; background: white;">
+                    <!-- Header -->
+                    <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--light-gray); padding-bottom: 20px;">
+                        <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 5px;">INVOICE</div>
+                        <div style="font-size: 1.2rem; color: var(--gray);">#${invoice.id.toString().padStart(8, '0')}</div>
+                    </div>
+
+                    <!-- Shop Details -->
+                    <div style="margin-bottom: 25px;">
+                        <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 8px;">${shopDetails.shopName}</div>
+                        <div style="color: var(--gray); line-height: 1.6;">
+                            ${shopDetails.shopAddress}<br>
+                            Phone: ${shopDetails.shopPhone}<br>
+                            ${shopDetails.shopEmail ? 'Email: ' + shopDetails.shopEmail + '<br>' : ''}
+                            ${shopDetails.shopGST ? 'GST: ' + shopDetails.shopGST : ''}
+                        </div>
+                    </div>
+
+                    <!-- Invoice Details -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; padding: 15px; background: var(--light); border-radius: 8px;">
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--gray); margin-bottom: 5px;">DATE & TIME</div>
+                            <div style="font-weight: 600;">${formatDate(invoice.date)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--gray); margin-bottom: 5px;">PAYMENT METHOD</div>
+                            <div style="font-weight: 600;">${invoice.paymentMethod}</div>
+                        </div>
+                    </div>
+
+                    <!-- Items Table -->
+                    <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--light); border-bottom: 2px solid var(--light-gray);">
+                                <th style="padding: 12px; text-align: left; font-size: 0.85rem; color: var(--gray);">ITEM</th>
+                                <th style="padding: 12px; text-align: center; font-size: 0.85rem; color: var(--gray);">QTY</th>
+                                <th style="padding: 12px; text-align: right; font-size: 0.85rem; color: var(--gray);">PRICE</th>
+                                <th style="padding: 12px; text-align: right; font-size: 0.85rem; color: var(--gray);">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${invoice.items.map(item => `
+                                <tr style="border-bottom: 1px solid var(--light-gray);">
+                                    <td style="padding: 12px; font-weight: 600;">${item.name}</td>
+                                    <td style="padding: 12px; text-align: center;">${item.qty}</td>
+                                    <td style="padding: 12px; text-align: right;">${formatCurrency(item.price)}</td>
+                                    <td style="padding: 12px; text-align: right; font-weight: 600;">${formatCurrency(item.price * item.qty)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <!-- Totals -->
+                    <div style="border-top: 2px solid var(--light-gray); padding-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 1rem;">
+                            <span>Subtotal:</span>
+                            <span style="font-weight: 600;">${formatCurrency(invoice.subtotal)}</span>
+                        </div>
+                        ${invoice.discount > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; color: var(--success); font-size: 1rem;">
+                                <span>Discount:</span>
+                                <span style="font-weight: 600;">-${formatCurrency(invoice.discount)}</span>
+                            </div>
+                        ` : ''}
+                        ${invoice.tax > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 1rem;">
+                                <span>Tax (${invoice.taxPercent}%):</span>
+                                <span style="font-weight: 600;">${formatCurrency(invoice.tax)}</span>
+                            </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid var(--dark); margin-top: 10px; font-size: 1.3rem;">
+                            <span style="font-weight: 700;">TOTAL:</span>
+                            <span style="font-weight: 700; color: var(--primary);">${formatCurrency(invoice.total)}</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    ${shopDetails.shopFooter ? `
+                        <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--light-gray); color: var(--gray); font-size: 0.9rem;">
+                            ${shopDetails.shopFooter}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('invoiceDetailModal').classList.add('active');
+        }
+
+        function closeInvoiceDetailModal() {
+            document.getElementById('invoiceDetailModal').classList.remove('active');
+            currentInvoiceId = null;
+        }
+
+        function reprintInvoice() {
+            if (!currentInvoiceId) return;
+            const invoice = transactions.find(inv => inv.id === currentInvoiceId);
+            if (!invoice) return;
+
+            const printWindow = window.open('', '', 'width=800,height=600');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Invoice #${invoice.id.toString().padStart(8, '0')}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 20px; }
+                        .shop-info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+                        th { background: #f5f5f5; }
+                        .totals { margin-top: 20px; }
+                        .total-row { display: flex; justify-content: space-between; padding: 5px 0; }
+                        .grand-total { font-size: 1.2em; font-weight: bold; border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; }
+                        .footer { text-align: center; margin-top: 30px; font-size: 0.9em; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>INVOICE</h1>
+                        <h2>#${invoice.id.toString().padStart(8, '0')}</h2>
+                    </div>
+                    <div class="shop-info">
+                        <strong>${shopDetails.shopName}</strong><br>
+                        ${shopDetails.shopAddress}<br>
+                        Phone: ${shopDetails.shopPhone}<br>
+                        ${shopDetails.shopEmail ? 'Email: ' + shopDetails.shopEmail + '<br>' : ''}
+                        ${shopDetails.shopGST ? 'GST: ' + shopDetails.shopGST : ''}
+                    </div>
+                    <div>
+                        <strong>Date:</strong> ${formatDate(invoice.date)}<br>
+                        <strong>Payment Method:</strong> ${invoice.paymentMethod}
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${invoice.items.map(item => `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>${item.qty}</td>
+                                    <td>${formatCurrency(item.price)}</td>
+                                    <td>${formatCurrency(item.price * item.qty)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span>${formatCurrency(invoice.subtotal)}</span>
+                        </div>
+                        ${invoice.discount > 0 ? `
+                            <div class="total-row">
+                                <span>Discount:</span>
+                                <span>-${formatCurrency(invoice.discount)}</span>
+                            </div>
+                        ` : ''}
+                        ${invoice.tax > 0 ? `
+                            <div class="total-row">
+                                <span>Tax (${invoice.taxPercent}%):</span>
+                                <span>${formatCurrency(invoice.tax)}</span>
+                            </div>
+                        ` : ''}
+                        <div class="total-row grand-total">
+                            <span>TOTAL:</span>
+                            <span>${formatCurrency(invoice.total)}</span>
+                        </div>
+                    </div>
+                    ${shopDetails.shopFooter ? `<div class="footer">${shopDetails.shopFooter}</div>` : ''}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function emailInvoice() {
+            if (!currentInvoiceId) return;
+            const invoice = transactions.find(inv => inv.id === currentInvoiceId);
+            if (!invoice) return;
+
+            const email = prompt('📧 Enter customer email address:', '');
+            if (!email) return;
+
+            if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                alert('❌ Invalid email address!');
+                return;
+            }
+
+            // Simulate email sending (in real app, this would be a backend API call)
+            const loading = document.createElement('div');
+            loading.innerHTML = '<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 10000; text-align: center;"><div style="font-size: 2rem; margin-bottom: 10px;">📧</div><div>Sending invoice...</div></div>';
+            document.body.appendChild(loading);
+
+            setTimeout(() => {
+                document.body.removeChild(loading);
+                alert(`✅ Invoice #${invoice.id.toString().padStart(8, '0')} sent successfully to ${email}!\n\n(Note: This is a demo. In production, you would integrate with an email service like SendGrid, Mailgun, or AWS SES)`);
+            }, 1500);
+        }
+
+        function smsInvoice() {
+            if (!currentInvoiceId) return;
+            const invoice = transactions.find(inv => inv.id === currentInvoiceId);
+            if (!invoice) return;
+
+            const phone = prompt('📱 Enter customer phone number:', '');
+            if (!phone) return;
+
+            if (!phone.match(/^\d{10}$/)) {
+                alert('❌ Invalid phone number! Please enter 10 digits.');
+                return;
+            }
+
+            // Simulate SMS sending (in real app, this would be a backend API call)
+            const loading = document.createElement('div');
+            loading.innerHTML = '<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 10000; text-align: center;"><div style="font-size: 2rem; margin-bottom: 10px;">📱</div><div>Sending SMS...</div></div>';
+            document.body.appendChild(loading);
+
+            setTimeout(() => {
+                document.body.removeChild(loading);
+                alert(`✅ Invoice details sent via SMS to ${phone}!\n\n(Note: This is a demo. In production, you would integrate with an SMS service like Twilio, AWS SNS, or MSG91)`);
+            }, 1500);
+        }
+
+        // ===== EXPENSE MANAGEMENT =====
+        function renderExpenses() {
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('expenseDate').value = today;
+            
+            filterExpensesByPeriod('month');
+        }
+
+        function addExpense() {
+            const date = document.getElementById('expenseDate').value;
+            const category = document.getElementById('expenseCategory').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const description = document.getElementById('expenseDescription').value.trim();
+
+            if (!date || !amount || amount <= 0) {
+                alert('❌ Please fill in all required fields!');
+                return;
+            }
+
+            const expense = {
+                id: nextExpenseId++,
+                date: new Date(date).toISOString(),
+                category,
+                amount,
+                description,
+                createdAt: new Date().toISOString()
+            };
+
+            expenses.push(expense);
+            localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+
+            // Clear form
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseDescription').value = '';
+
+            alert('✅ Expense recorded successfully!');
+            filterExpensesByPeriod('month');
+        }
+
+        function filterExpensesByPeriod(period) {
+            const today = new Date();
+            let startDate = new Date();
+
+            switch(period) {
+                case 'today':
+                    startDate.setHours(0, 0, 0, 0);
+                    break;
+                case 'week':
+                    startDate.setDate(today.getDate() - 7);
+                    break;
+                case 'month':
+                    startDate.setMonth(today.getMonth() - 1);
+                    break;
+                case 'all':
+                    startDate = new Date(0);
+                    break;
+            }
+
+            const filteredExpenses = expenses.filter(exp => new Date(exp.date) >= startDate);
+            displayExpenses(filteredExpenses);
+            updateExpenseStats(filteredExpenses);
+        }
+
+        function displayExpenses(expensesToShow) {
+            const container = document.getElementById('expensesList');
+
+            if (expensesToShow.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: white; border-radius: 12px;">
+                        <div style="font-size: 4rem; margin-bottom: 15px;">💸</div>
+                        <div style="font-size: 1.3rem; font-weight: 600; color: var(--gray); margin-bottom: 8px;">No Expenses Found</div>
+                        <div style="color: var(--gray);">Record your first expense to start tracking</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by category
+            const groupedExpenses = {};
+            expensesToShow.forEach(exp => {
+                if (!groupedExpenses[exp.category]) {
+                    groupedExpenses[exp.category] = [];
+                }
+                groupedExpenses[exp.category].push(exp);
+            });
+
+            container.innerHTML = Object.keys(groupedExpenses).map(category => {
+                const categoryExpenses = groupedExpenses[category];
+                const categoryTotal = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+                return `
+                    <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid var(--light-gray);">
+                            <h3 style="margin: 0; color: var(--dark);">${category}</h3>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: var(--danger);">${formatCurrency(categoryTotal)}</div>
+                        </div>
+                        ${categoryExpenses.map(exp => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--light-gray);">
+                                <div>
+                                    <div style="font-weight: 600;">${exp.description || 'No description'}</div>
+                                    <div style="font-size: 0.85rem; color: var(--gray);">${formatDate(exp.date)}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--danger);">${formatCurrency(exp.amount)}</div>
+                                    <button onclick="deleteExpense(${exp.id})" class="btn btn-delete" style="padding: 6px 12px; font-size: 0.85rem;">🗑️</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateExpenseStats(expensesToShow) {
+            const today = new Date();
+            const todayStart = new Date(today.setHours(0, 0, 0, 0));
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            const todayExpenses = expenses.filter(exp => new Date(exp.date) >= todayStart);
+            const monthExpenses = expenses.filter(exp => new Date(exp.date) >= monthStart);
+
+            const todayTotal = todayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const monthTotal = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+            // Calculate month revenue
+            const monthTransactions = transactions.filter(t => new Date(t.date) >= monthStart && !t.isRefunded);
+            const monthRevenue = monthTransactions.reduce((sum, t) => sum + t.total, 0);
+            const monthProfit = monthRevenue - monthTotal;
+            const cashFlow = monthProfit;
+
+            document.getElementById('totalExpensesToday').textContent = formatCurrency(todayTotal);
+            document.getElementById('totalExpensesMonth').textContent = formatCurrency(monthTotal);
+            document.getElementById('profitThisMonth').textContent = formatCurrency(monthProfit);
+            document.getElementById('cashFlow').textContent = formatCurrency(cashFlow);
+        }
+
+        function deleteExpense(expenseId) {
+            if (!confirm('🗑️ Are you sure you want to delete this expense?')) return;
+
+            expenses = expenses.filter(exp => exp.id !== expenseId);
+            localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
+            filterExpensesByPeriod('month');
+            alert('✅ Expense deleted successfully!');
+        }
+
+        // ===== SUPPLIER MANAGEMENT =====
+        function renderSuppliers() {
+            updateSupplierStats();
+            displaySuppliers();
+            populateSupplierDropdowns();
+        }
+
+        function updateSupplierStats() {
+            const totalSuppliers = suppliers.length;
+            const totalPOs = purchaseOrders.length;
+            const pendingPOs = purchaseOrders.filter(po => po.status === 'pending').length;
+            const totalPayable = purchaseOrders
+                .filter(po => po.status === 'pending')
+                .reduce((sum, po) => sum + po.total, 0);
+
+            document.getElementById('totalSuppliersCount').textContent = totalSuppliers;
+            document.getElementById('totalPurchaseOrders').textContent = totalPOs;
+            document.getElementById('pendingPayments').textContent = pendingPOs;
+            document.getElementById('totalPayableAmount').textContent = formatCurrency(totalPayable);
+        }
+
+        function displaySuppliers() {
+            const container = document.getElementById('suppliersList');
+
+            if (suppliers.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: white; border-radius: 12px;">
+                        <div style="font-size: 4rem; margin-bottom: 15px;">🏪</div>
+                        <div style="font-size: 1.3rem; font-weight: 600; color: var(--gray); margin-bottom: 8px;">No Suppliers Added</div>
+                        <div style="color: var(--gray);">Add your first supplier to start managing purchase orders</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = suppliers.map(supplier => {
+                const supplierPOs = purchaseOrders.filter(po => po.supplierId === supplier.id);
+                const pendingPOs = supplierPOs.filter(po => po.status === 'pending');
+                const totalOrders = supplierPOs.length;
+                const pendingAmount = pendingPOs.reduce((sum, po) => sum + po.total, 0);
+
+                return `
+                    <div style="background: white; border: 2px solid var(--light-gray); border-radius: 12px; padding: 20px; transition: var(--transition); cursor: pointer;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--light-gray)'">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 20px; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 1.2rem; color: var(--primary); margin-bottom: 5px;">${supplier.name}</div>
+                                <div style="font-size: 0.9rem; color: var(--gray); margin-bottom: 3px;">📞 ${supplier.phone}</div>
+                                ${supplier.email ? `<div style="font-size: 0.9rem; color: var(--gray);">📧 ${supplier.email}</div>` : ''}
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">TOTAL ORDERS</div>
+                                <div style="font-weight: 700; font-size: 1.2rem;">${totalOrders}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">PENDING</div>
+                                <div style="font-weight: 700; font-size: 1.2rem; color: var(--warning);">${pendingPOs.length}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--gray); margin-bottom: 4px;">PAYABLE</div>
+                                <div style="font-weight: 700; font-size: 1.2rem; color: var(--danger);">${formatCurrency(pendingAmount)}</div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="event.stopPropagation(); showPurchaseOrderModal(${supplier.id})" class="btn btn-primary" style="padding: 8px 12px;">📦 Order</button>
+                                <button onclick="event.stopPropagation(); editSupplier(${supplier.id})" class="btn btn-edit" style="padding: 8px 12px;">✏️</button>
+                                <button onclick="event.stopPropagation(); deleteSupplier(${supplier.id})" class="btn btn-delete" style="padding: 8px 12px;">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAddSupplierModal() {
+            editingSupplierId = null;
+            document.getElementById('supplierModalTitle').textContent = '➕ Add Supplier';
+            document.getElementById('supplierId').value = '';
+            document.getElementById('supplierName').value = '';
+            document.getElementById('supplierContact').value = '';
+            document.getElementById('supplierPhone').value = '';
+            document.getElementById('supplierEmail').value = '';
+            document.getElementById('supplierAddress').value = '';
+            document.getElementById('supplierPaymentTerms').value = '30';
+            document.getElementById('supplierGST').value = '';
+            document.getElementById('supplierModal').classList.add('active');
+        }
+
+        function closeSupplierModal() {
+            document.getElementById('supplierModal').classList.remove('active');
+            editingSupplierId = null;
+        }
+
+        function saveSupplier() {
+            const name = document.getElementById('supplierName').value.trim();
+            const phone = document.getElementById('supplierPhone').value.trim();
+
+            if (!name || !phone) {
+                alert('❌ Please fill in required fields (Name and Phone)!');
+                return;
+            }
+
+            const supplierData = {
+                name,
+                contactPerson: document.getElementById('supplierContact').value.trim(),
+                phone,
+                email: document.getElementById('supplierEmail').value.trim(),
+                address: document.getElementById('supplierAddress').value.trim(),
+                paymentTerms: parseInt(document.getElementById('supplierPaymentTerms').value) || 30,
+                gst: document.getElementById('supplierGST').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+
+            if (editingSupplierId) {
+                const supplier = suppliers.find(s => s.id === editingSupplierId);
+                Object.assign(supplier, supplierData);
+                alert('✅ Supplier updated successfully!');
+            } else {
+                supplierData.id = nextSupplierId++;
+                suppliers.push(supplierData);
+                alert('✅ Supplier added successfully!');
+            }
+
+            localStorage.setItem(STORAGE_KEYS.SUPPLIERS, JSON.stringify(suppliers));
+            closeSupplierModal();
+            renderSuppliers();
+        }
+
+        function editSupplier(supplierId) {
+            const supplier = suppliers.find(s => s.id === supplierId);
+            if (!supplier) return;
+
+            editingSupplierId = supplierId;
+            document.getElementById('supplierModalTitle').textContent = '✏️ Edit Supplier';
+            document.getElementById('supplierId').value = supplier.id;
+            document.getElementById('supplierName').value = supplier.name;
+            document.getElementById('supplierContact').value = supplier.contactPerson || '';
+            document.getElementById('supplierPhone').value = supplier.phone;
+            document.getElementById('supplierEmail').value = supplier.email || '';
+            document.getElementById('supplierAddress').value = supplier.address || '';
+            document.getElementById('supplierPaymentTerms').value = supplier.paymentTerms;
+            document.getElementById('supplierGST').value = supplier.gst || '';
+            document.getElementById('supplierModal').classList.add('active');
+        }
+
+        function deleteSupplier(supplierId) {
+            if (!confirm('🗑️ Are you sure you want to delete this supplier?')) return;
+
+            suppliers = suppliers.filter(s => s.id !== supplierId);
+            localStorage.setItem(STORAGE_KEYS.SUPPLIERS, JSON.stringify(suppliers));
+            renderSuppliers();
+            populateSupplierDropdowns();
+            alert('✅ Supplier deleted successfully!');
+        }
+
+        function populateSupplierDropdowns() {
+            const supplierSelects = [
+                document.getElementById('productSupplier'),
+                document.getElementById('poSupplier')
+            ];
+
+            supplierSelects.forEach(select => {
+                if (!select) return;
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">-- Select Supplier --</option>' +
+                    suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                select.value = currentValue;
+            });
+        }
+
+        // ===== PURCHASE ORDER MANAGEMENT =====
+        function showPurchaseOrderModal(supplierId) {
+            currentPOItems = [];
+            populateSupplierDropdowns();
+            populatePOProducts();
+            
+            if (supplierId) {
+                document.getElementById('poSupplier').value = supplierId;
+            }
+
+            // Set default delivery date (7 days from now)
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + 7);
+            document.getElementById('poDeliveryDate').value = deliveryDate.toISOString().split('T')[0];
+
+            updatePOItemsList();
+            document.getElementById('purchaseOrderModal').classList.add('active');
+        }
+
+        function closePurchaseOrderModal() {
+            document.getElementById('purchaseOrderModal').classList.remove('active');
+            currentPOItems = [];
+        }
+
+        function populatePOProducts() {
+            const select = document.getElementById('poProduct');
+            select.innerHTML = '<option value="">-- Select Product --</option>' +
+                products.map(p => `<option value="${p.id}">${p.name} (Current Stock: ${p.qty})</option>`).join('');
+        }
+
+        function addProductToPO() {
+            const productId = parseInt(document.getElementById('poProduct').value);
+            const quantity = parseInt(document.getElementById('poQuantity').value);
+            const unitPrice = parseFloat(document.getElementById('poUnitPrice').value);
+
+            if (!productId || !quantity || quantity <= 0 || !unitPrice || unitPrice <= 0) {
+                alert('❌ Please fill in all fields!');
+                return;
+            }
+
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            // Check if product already in list
+            const existingItem = currentPOItems.find(item => item.productId === productId);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+                existingItem.total = existingItem.quantity * existingItem.unitPrice;
+            } else {
+                currentPOItems.push({
+                    productId,
+                    productName: product.name,
+                    quantity,
+                    unitPrice,
+                    total: quantity * unitPrice
+                });
+            }
+
+            // Clear inputs
+            document.getElementById('poProduct').value = '';
+            document.getElementById('poQuantity').value = '1';
+            document.getElementById('poUnitPrice').value = '';
+
+            updatePOItemsList();
+        }
+
+        function updatePOItemsList() {
+            const container = document.getElementById('poItemsList');
+            
+            if (currentPOItems.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--gray);">No products added yet</div>';
+                document.getElementById('poTotalAmount').textContent = '₹0.00';
+                return;
+            }
+
+            const total = currentPOItems.reduce((sum, item) => sum + item.total, 0);
+
+            container.innerHTML = `
+                <div style="background: var(--light); padding: 15px; border-radius: 8px;">
+                    ${currentPOItems.map((item, index) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--light-gray);">
+                            <div style="flex: 2;">
+                                <div style="font-weight: 600;">${item.productName}</div>
+                                <div style="font-size: 0.85rem; color: var(--gray);">${item.quantity} × ${formatCurrency(item.unitPrice)}</div>
+                            </div>
+                            <div style="font-weight: 700; font-size: 1.1rem; margin-right: 15px;">${formatCurrency(item.total)}</div>
+                            <button onclick="removeProductFromPO(${index})" class="btn btn-delete" style="padding: 6px 10px; font-size: 0.85rem;">✖</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('poTotalAmount').textContent = formatCurrency(total);
+        }
+
+        function removeProductFromPO(index) {
+            currentPOItems.splice(index, 1);
+            updatePOItemsList();
+        }
+
+        function savePurchaseOrder() {
+            const supplierId = parseInt(document.getElementById('poSupplier').value);
+            const deliveryDate = document.getElementById('poDeliveryDate').value;
+
+            if (!supplierId) {
+                alert('❌ Please select a supplier!');
+                return;
+            }
+
+            if (currentPOItems.length === 0) {
+                alert('❌ Please add at least one product!');
+                return;
+            }
+
+            const supplier = suppliers.find(s => s.id === supplierId);
+            const total = currentPOItems.reduce((sum, item) => sum + item.total, 0);
+
+            const purchaseOrder = {
+                id: nextPOId++,
+                supplierId,
+                supplierName: supplier.name,
+                items: currentPOItems,
+                total,
+                deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : null,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+
+            purchaseOrders.push(purchaseOrder);
+            localStorage.setItem(STORAGE_KEYS.PURCHASE_ORDERS, JSON.stringify(purchaseOrders));
+
+            alert(`✅ Purchase Order #${purchaseOrder.id} created successfully!\n\nSupplier: ${supplier.name}\nTotal: ${formatCurrency(total)}\nItems: ${currentPOItems.length}`);
+            
+            closePurchaseOrderModal();
+            renderSuppliers();
+        }
+
+        // ===== LOW STOCK ALERTS =====
+        function checkLowStock() {
+            const lowStockProducts = products.filter(p => {
+                const minStock = p.minStock || 10;
+                return p.qty <= minStock && p.qty > 0;
+            });
+
+            const outOfStockProducts = products.filter(p => p.qty === 0);
+
+            if (lowStockProducts.length === 0 && outOfStockProducts.length === 0) {
+                return;
+            }
+
+            let alertMessage = '';
+            
+            if (lowStockProducts.length > 0) {
+                alertMessage += `<div style="margin-bottom: 10px;"><strong>⚠️ Low Stock (${lowStockProducts.length}):</strong></div>`;
+                alertMessage += lowStockProducts.slice(0, 5).map(p => 
+                    `<div style="padding: 5px 0; font-size: 0.85rem;">• ${p.name}: ${p.qty} left (min: ${p.minStock || 10})</div>`
+                ).join('');
+                if (lowStockProducts.length > 5) {
+                    alertMessage += `<div style="padding: 5px 0; font-size: 0.85rem;">• +${lowStockProducts.length - 5} more products</div>`;
+                }
+            }
+
+            if (outOfStockProducts.length > 0) {
+                alertMessage += `<div style="margin-top: 10px; margin-bottom: 10px;"><strong>🔴 Out of Stock (${outOfStockProducts.length}):</strong></div>`;
+                alertMessage += outOfStockProducts.slice(0, 3).map(p => 
+                    `<div style="padding: 5px 0; font-size: 0.85rem;">• ${p.name}</div>`
+                ).join('');
+                if (outOfStockProducts.length > 3) {
+                    alertMessage += `<div style="padding: 5px 0; font-size: 0.85rem;">• +${outOfStockProducts.length - 3} more products</div>`;
+                }
+            }
+
+            alertMessage += `<div style="margin-top: 15px;"><button onclick="switchTab('suppliers')" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%;">📦 Reorder from Suppliers</button></div>`;
+
+            document.getElementById('lowStockAlertContent').innerHTML = alertMessage;
+            document.getElementById('lowStockAlert').style.display = 'block';
+
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                closeLowStockAlert();
+            }, 10000);
+        }
+
+        function closeLowStockAlert() {
+            document.getElementById('lowStockAlert').style.display = 'none';
+        }
+
         // ===== SETTINGS MANAGEMENT =====
         function loadShopSettings() {
             document.getElementById('shopName').value = shopDetails.shopName;
@@ -5592,6 +6910,8 @@ TOTAL PAID: ${formatCurrency(total)}
             renderInventory();
             renderDashboard();
             updateCart();
+            populateSupplierDropdowns();
+            checkLowStock();
 
             // Close modals on outside click
             document.querySelectorAll('.modal').forEach(modal => {
