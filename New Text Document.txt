@@ -3,14 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#667eea">
-    <meta name="description" content="Complete Supermarket Management System with POS, Inventory, Dashboard, and Billing">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SMS POS">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='100' fill='white' font-weight='bold'>SMS</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='100' fill='white' font-weight='bold'>SMS</text></svg>">
     <title>Supermarket Management System - POS</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
@@ -3255,30 +3247,6 @@
                     <button class="add-product-btn" onclick="saveShopSettings()" style="width: 100%; margin-top: 20px;">
                         💾 Save Shop Settings
                     </button>
-                </div>
-
-                <div class="settings-card">
-                    <h3>📱 App Installation</h3>
-                    <p style="margin-bottom: 15px; color: var(--gray); font-size: 0.9rem;">
-                        Install this app on all your devices for easy access and offline support.
-                    </p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <button class="add-product-btn" onclick="installAppForAllDevices()" style="width: 100%; background: var(--success);">
-                            ⬇️ Install App Now
-                        </button>
-                        <button class="add-product-btn" onclick="showInstallationGuide()" style="width: 100%; background: var(--primary);">
-                            📖 Installation Guide
-                        </button>
-                    </div>
-                    <div style="margin-top: 15px; padding: 12px; background: var(--light); border-radius: 8px; font-size: 0.85rem; color: var(--gray);">
-                        <strong>Benefits:</strong>
-                        <ul style="margin-top: 8px; margin-left: 20px;">
-                            <li>Access the app on desktop, tablet, and mobile devices</li>
-                            <li>Work offline when internet is unavailable</li>
-                            <li>Fast loading with app-like experience</li>
-                            <li>Sync data across all your devices</li>
-                        </ul>
-                    </div>
                 </div>
 
                 <div class="alert-card alert-info">
@@ -7871,103 +7839,6 @@ TOTAL PAID: ${formatCurrency(total)}
             document.getElementById('confirmModal').classList.remove('active');
         }
 
-        // ===== APP INSTALLATION FUNCTIONS =====
-        function installAppForAllDevices() {
-            const deferredPrompt = window.deferredPrompt;
-            
-            if (!deferredPrompt) {
-                // If browser doesn't support installation, show manual instructions
-                showInstallationGuide();
-                return;
-            }
-
-            // Show the installation prompt
-            deferredPrompt.prompt();
-            
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    alert('✅ App installation started! You can now access Supermarket Management System from your app drawer or home screen.');
-                    window.deferredPrompt = null;
-                } else {
-                    showInstallationGuide();
-                }
-            });
-        }
-
-        function showInstallationGuide() {
-            const guide = `
-                <div class="modal active" style="z-index: 10000;">
-                    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-                        <div class="modal-header">
-                            <span>📱 Installation Guide</span>
-                            <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <h3 style="margin-bottom: 15px; color: var(--primary);">How to Install on Different Devices:</h3>
-                            
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="color: var(--dark); margin-bottom: 10px;">📱 Android Phone/Tablet:</h4>
-                                <ol style="margin-left: 20px; line-height: 1.8;">
-                                    <li>Open this website in Chrome or Firefox browser</li>
-                                    <li>Tap the three dots menu (⋮) in the top right</li>
-                                    <li>Select "Install app" or "Add to Home screen"</li>
-                                    <li>Follow the on-screen prompts</li>
-                                    <li>The app will now appear on your home screen</li>
-                                </ol>
-                            </div>
-
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="color: var(--dark); margin-bottom: 10px;">🍎 iPhone/iPad:</h4>
-                                <ol style="margin-left: 20px; line-height: 1.8;">
-                                    <li>Open this website in Safari browser</li>
-                                    <li>Tap the Share button (square with arrow)</li>
-                                    <li>Scroll down and tap "Add to Home Screen"</li>
-                                    <li>Choose an app name and tap Add</li>
-                                    <li>The app will now appear on your home screen</li>
-                                </ol>
-                            </div>
-
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="color: var(--dark); margin-bottom: 10px;">💻 Windows/Mac (Desktop):</h4>
-                                <ol style="margin-left: 20px; line-height: 1.8;">
-                                    <li>Open this website in Chrome, Edge, or Brave</li>
-                                    <li>Look for the install icon (usually next to the address bar)</li>
-                                    <li>Click "Install" when prompted</li>
-                                    <li>The app will open in its own window like a desktop app</li>
-                                </ol>
-                            </div>
-
-                            <div style="background: var(--light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--success);">
-                                <strong>💡 Tips:</strong>
-                                <ul style="margin-top: 10px; margin-left: 20px;">
-                                    <li>After installation, you can use the app offline</li>
-                                    <li>Your data syncs across all installed devices automatically</li>
-                                    <li>No need to download from app stores</li>
-                                    <li>Updates happen automatically in the background</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="modal-btn modal-btn-confirm" onclick="this.closest('.modal').remove()" style="background: var(--primary);">
-                                Got it, thanks!
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', guide);
-        }
-
-        // ===== DATA RESET FUNCTIONS =====
-        function confirmReset() {
-            document.getElementById('confirmModal').classList.add('active');
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').classList.remove('active');
-        }
-
         function forceResetSystem() {
             localStorage.clear();
             location.reload();
@@ -8025,28 +7896,6 @@ TOTAL PAID: ${formatCurrency(total)}
             updateCart();
             populateSupplierDropdowns();
             checkLowStock();
-
-            // Register service worker for offline support
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('service-worker.js').then(registration => {
-                    console.log('✅ Service Worker registered:', registration);
-                }).catch(error => {
-                    console.log('⚠️ Service Worker registration failed:', error);
-                });
-            }
-
-            // Listen for beforeinstallprompt event globally
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                window.deferredPrompt = e;
-                console.log('✅ Install prompt ready!');
-            });
-
-            // Track app installation
-            window.addEventListener('appinstalled', () => {
-                console.log('✅ App successfully installed!');
-                window.deferredPrompt = null;
-            });
 
             // Close modals on outside click
             document.querySelectorAll('.modal').forEach(modal => {
