@@ -605,6 +605,53 @@
             transform: translateY(0) !important;
         }
 
+        .promo-type-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .promo-card {
+            background: white;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .promo-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+        }
+
+        .promo-card.active {
+            border-left: 4px solid var(--success);
+            background: #f0fff4;
+        }
+
+        .promo-card.inactive {
+            opacity: 0.6;
+            border-left: 4px solid var(--gray);
+        }
+
+        .promo-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .promo-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .promo-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .transaction-card:not([style*="cursor: not-allowed"]):hover {
             border-color: var(--primary) !important;
             transform: translateX(5px);
@@ -2415,6 +2462,8 @@
             <button class="nav-tab active" data-tab="pos" onclick="switchTab('pos')">🛒 POS</button>
             <button class="nav-tab" data-tab="inventory" onclick="switchTab('inventory')">📦 Inventory</button>
             <button class="nav-tab" data-tab="invoices" onclick="switchTab('invoices')">� Invoices</button>
+            <button class="nav-tab" data-tab="invoices" onclick="switchTab('invoices')">📄 Invoices</button>
+            <button class="nav-tab" data-tab="promotions" onclick="switchTab('promotions')">🎉 Promotions</button>
             <button class="nav-tab" data-tab="expenses" onclick="switchTab('expenses')">💰 Expenses</button>
             <button class="nav-tab" data-tab="suppliers" onclick="switchTab('suppliers')">🏪 Suppliers</button>
             <button class="nav-tab" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
@@ -2494,6 +2543,17 @@
                                 <span>Discount:</span>
                                 <span id="discountAmount">-₹0.00</span>
                             </div>
+                            <div class="summary-row" id="promotionRow" style="display: none; color: var(--success);">
+                                <span>🎁 Promotion:</span>
+                                <span id="promotionAmount">-₹0.00</span>
+                            </div>
+                            <div class="summary-row" id="couponRow" style="display: none; color: var(--success);">
+                                <span>🎫 Coupon <span id="appliedCouponCode"></span>:</span>
+                                <span>
+                                    <span id="couponAmount">-₹0.00</span>
+                                    <button onclick="removeCoupon()" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 5px; font-size: 1rem;" title="Remove coupon">×</button>
+                                </span>
+                            </div>
                             <div class="summary-row" id="taxRow" style="display: none;">
                                 <span>Tax (<span id="taxRate">0</span>%):</span>
                                 <span id="taxAmount">₹0.00</span>
@@ -2514,6 +2574,10 @@
                                     💰 Refund
                                 </button>
                             </div>
+                            
+                            <button onclick="showApplyCouponModal()" style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: var(--transition);">
+                                🎫 Apply Coupon Code
+                            </button>
                             
                             <button class="clear-cart-btn" onclick="clearCart()">
                                 🗑️ Clear Cart
@@ -2958,6 +3022,59 @@
                 </div>
             </div>
 
+            <!-- Promotions Section -->
+            <div id="promotions" class="section">
+                <h2 class="section-title">🎁 Promotions & Offers</h2>
+                
+                <!-- Quick Actions -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <button onclick="showPromotionModal('bogo')" class="promo-type-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: var(--transition);">
+                        🎯 Buy 1 Get 1
+                    </button>
+                    <button onclick="showPromotionModal('bundle')" class="promo-type-btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: var(--transition);">
+                        📦 Bundle Deal
+                    </button>
+                    <button onclick="showPromotionModal('timebased')" class="promo-type-btn" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: var(--transition);">
+                        ⏰ Happy Hour
+                    </button>
+                    <button onclick="showPromotionModal('seasonal')" class="promo-type-btn" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: var(--transition);">
+                        🌟 Seasonal
+                    </button>
+                    <button onclick="showPromotionModal('coupon')" class="promo-type-btn" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: var(--transition);">
+                        🎫 Coupon Code
+                    </button>
+                </div>
+
+                <!-- Active Promotions Stats -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎁</div>
+                        <div class="stat-value" id="totalPromotions">0</div>
+                        <div class="stat-label">Total Promotions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="activePromotions">0</div>
+                        <div class="stat-label">Active Now</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-value" id="promotionSavings">₹0.00</div>
+                        <div class="stat-label">Total Savings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="promotionUsage">0</div>
+                        <div class="stat-label">Times Used</div>
+                    </div>
+                </div>
+
+                <!-- Promotions List -->
+                <div id="promotionsList" style="display: grid; gap: 15px;">
+                    <!-- Promotions will be populated here -->
+                </div>
+            </div>
+
             <!-- Expenses Section -->
             <div id="expenses" class="section">
                 <h2 class="section-title">💰 Expense Tracking</h2>
@@ -3344,6 +3461,198 @@
         </div>
     </div>
 
+    <!-- Promotion Modal -->
+    <div id="promotionModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <span id="promotionModalTitle">🎁 Create Promotion</span>
+                <button class="modal-close" onclick="closePromotionModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="promotionId">
+                <input type="hidden" id="promotionType">
+                
+                <div class="input-group">
+                    <label>Promotion Name *</label>
+                    <input type="text" id="promotionName" placeholder="e.g., Weekend Special">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>Start Date *</label>
+                        <input type="date" id="promotionStartDate">
+                    </div>
+                    <div class="input-group">
+                        <label>End Date *</label>
+                        <input type="date" id="promotionEndDate">
+                    </div>
+                </div>
+
+                <!-- BOGO Fields -->
+                <div id="bogoFields" style="display: none;">
+                    <div class="input-group">
+                        <label>Select Product *</label>
+                        <select id="bogoProduct">
+                            <option value="">-- Select Product --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Offer Type</label>
+                        <select id="bogoType">
+                            <option value="free">Buy 1 Get 1 Free</option>
+                            <option value="50">Buy 1 Get 1 at 50% Off</option>
+                            <option value="buy2get1">Buy 2 Get 1 Free</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Bundle Fields -->
+                <div id="bundleFields" style="display: none;">
+                    <div class="input-group">
+                        <label>Bundle Products * (Select multiple)</label>
+                        <div id="bundleProductsList" style="max-height: 200px; overflow-y: auto; border: 2px solid var(--light-gray); border-radius: 8px; padding: 10px;">
+                            <!-- Products will be populated -->
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Bundle Discount (%) *</label>
+                        <input type="number" id="bundleDiscount" placeholder="20" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Bundle Price (₹) <span style="font-size: 0.85rem; color: var(--gray);">(Optional, overrides discount)</span></label>
+                        <input type="number" id="bundlePrice" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                </div>
+
+                <!-- Time-based Fields -->
+                <div id="timebasedFields" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="input-group">
+                            <label>Start Time *</label>
+                            <input type="time" id="timebasedStartTime">
+                        </div>
+                        <div class="input-group">
+                            <label>End Time *</label>
+                            <input type="time" id="timebasedEndTime">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Discount (%) *</label>
+                        <input type="number" id="timebasedDiscount" placeholder="15" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Apply To</label>
+                        <select id="timebasedApplyTo">
+                            <option value="all">All Products</option>
+                            <option value="category">Specific Category</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="timebasedCategoryDiv" style="display: none;">
+                        <label>Category</label>
+                        <select id="timebasedCategory"></select>
+                    </div>
+                </div>
+
+                <!-- Seasonal Fields -->
+                <div id="seasonalFields" style="display: none;">
+                    <div class="input-group">
+                        <label>Season/Event *</label>
+                        <select id="seasonalEvent">
+                            <option value="summer">Summer Sale</option>
+                            <option value="monsoon">Monsoon Madness</option>
+                            <option value="diwali">Diwali Dhamaka</option>
+                            <option value="christmas">Christmas Special</option>
+                            <option value="newyear">New Year Bash</option>
+                            <option value="holi">Holi Festival</option>
+                            <option value="eid">Eid Celebration</option>
+                            <option value="custom">Custom Event</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="customEventDiv" style="display: none;">
+                        <label>Custom Event Name</label>
+                        <input type="text" id="customEventName" placeholder="Enter event name">
+                    </div>
+                    <div class="input-group">
+                        <label>Discount (%) *</label>
+                        <input type="number" id="seasonalDiscount" placeholder="25" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Apply To</label>
+                        <select id="seasonalApplyTo">
+                            <option value="all">All Products</option>
+                            <option value="category">Specific Category</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="seasonalCategoryDiv" style="display: none;">
+                        <label>Category</label>
+                        <select id="seasonalCategory"></select>
+                    </div>
+                </div>
+
+                <!-- Coupon Fields -->
+                <div id="couponFields" style="display: none;">
+                    <div class="input-group">
+                        <label>Coupon Code * <button onclick="generateCouponCode()" type="button" style="margin-left: 10px; padding: 4px 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Generate</button></label>
+                        <input type="text" id="couponCode" placeholder="e.g., SAVE20" style="text-transform: uppercase;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="input-group">
+                            <label>Discount Type *</label>
+                            <select id="couponDiscountType">
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount (₹)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Discount Value *</label>
+                            <input type="number" id="couponDiscountValue" placeholder="20" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="input-group">
+                            <label>Min Purchase Amount (₹)</label>
+                            <input type="number" id="couponMinPurchase" placeholder="0" min="0" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label>Max Uses <span style="font-size: 0.85rem; color: var(--gray);">(0 = unlimited)</span></label>
+                            <input type="number" id="couponMaxUses" placeholder="0" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Description <span style="font-size: 0.85rem; color: var(--gray);">(Optional)</span></label>
+                    <textarea id="promotionDescription" placeholder="Enter promotion details" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closePromotionModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" onclick="savePromotion()">💾 Save Promotion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apply Coupon Modal -->
+    <div id="applyCouponModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <span>🎫 Apply Coupon Code</span>
+                <button class="modal-close" onclick="closeApplyCouponModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Enter Coupon Code</label>
+                    <input type="text" id="applyCouponCode" placeholder="Enter code" style="text-transform: uppercase;" onkeypress="if(event.key==='Enter') applyCouponCode()">
+                </div>
+                <div id="couponMessage" style="margin-top: 10px; padding: 10px; border-radius: 6px; display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeApplyCouponModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" onclick="applyCouponCode()">✅ Apply</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add/Edit Supplier Modal -->
     <div id="supplierModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
@@ -3482,7 +3791,8 @@
             ADMIN_PIN: 'supermarket_admin_pin',
             EXPENSES: 'supermarket_expenses',
             SUPPLIERS: 'supermarket_suppliers',
-            PURCHASE_ORDERS: 'supermarket_purchase_orders'
+            PURCHASE_ORDERS: 'supermarket_purchase_orders',
+            PROMOTIONS: 'supermarket_promotions'
         };
 
         let products = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS)) || [];
@@ -3491,8 +3801,10 @@
         let expenses = JSON.parse(localStorage.getItem(STORAGE_KEYS.EXPENSES)) || [];
         let suppliers = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUPPLIERS)) || [];
         let purchaseOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.PURCHASE_ORDERS)) || [];
+        let promotions = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROMOTIONS)) || [];
         let editingProductId = null;
         let selectedPaymentMethod = null;
+        let appliedCoupon = null;
         let nextProductId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
         let nextExpenseId = expenses.length > 0 ? Math.max(...expenses.map(e => e.id)) + 1 : 1;
         let nextSupplierId = suppliers.length > 0 ? Math.max(...suppliers.map(s => s.id)) + 1 : 1;
@@ -3773,6 +4085,9 @@
                     break;
                 case 'invoices':
                     renderInvoices();
+                    break;
+                case 'promotions':
+                    renderPromotions();
                     break;
                 case 'expenses':
                     renderExpenses();
@@ -4571,10 +4886,41 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
                 discountRow.style.display = 'none';
             }
 
+            // Calculate automatic promotions
+            let promotionDiscount = 0;
+            const activePromotions = checkActivePromotions();
+            
+            // Show/hide promotion row
+            const promotionRow = document.getElementById('promotionRow');
+            if (promotionDiscount > 0) {
+                promotionRow.style.display = 'flex';
+                document.getElementById('promotionAmount').textContent = '-' + formatCurrency(promotionDiscount);
+            } else {
+                promotionRow.style.display = 'none';
+            }
+
+            // Calculate coupon discount
+            let couponDiscount = 0;
+            const couponRow = document.getElementById('couponRow');
+            if (appliedCoupon) {
+                const amountForCoupon = subtotal - discount - promotionDiscount;
+                if (appliedCoupon.discountType === 'percentage') {
+                    couponDiscount = (amountForCoupon * appliedCoupon.discountValue) / 100;
+                } else {
+                    couponDiscount = appliedCoupon.discountValue;
+                }
+                
+                couponRow.style.display = 'flex';
+                document.getElementById('appliedCouponCode').textContent = `(${appliedCoupon.couponCode})`;
+                document.getElementById('couponAmount').textContent = '-' + formatCurrency(couponDiscount);
+            } else {
+                couponRow.style.display = 'none';
+            }
+
             // Calculate tax
             const taxType = document.getElementById('taxType').value;
             const taxRate = parseFloat(taxType) || 0;
-            const amountAfterDiscount = subtotal - discount;
+            const amountAfterDiscount = subtotal - discount - promotionDiscount - couponDiscount;
             const tax = (amountAfterDiscount * taxRate) / 100;
 
             // Show/hide tax row
@@ -4590,6 +4936,50 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
             // Calculate total
             const total = amountAfterDiscount + tax;
             document.getElementById('total').textContent = formatCurrency(total);
+        }
+
+        function checkActivePromotions() {
+            if (cart.length === 0) return [];
+            
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            return promotions.filter(promo => {
+                if (!promo.active || promo.type === 'coupon') return false;
+                
+                const start = new Date(promo.startDate);
+                const end = new Date(promo.endDate);
+                end.setHours(23, 59, 59, 999);
+                
+                if (now < start || now > end) return false;
+                
+                // Check time-based promotions
+                if (promo.type === 'timebased' && promo.timeRange) {
+                    const [startH, startM] = promo.timeRange.start.split(':').map(Number);
+                    const [endH, endM] = promo.timeRange.end.split(':').map(Number);
+                    const startMinutes = startH * 60 + startM;
+                    const endMinutes = endH * 60 + endM;
+                    if (currentTime < startMinutes || currentTime > endMinutes) return false;
+                }
+                
+                // Check if promotion applies to cart items
+                if (promo.type === 'bogo') {
+                    return cart.some(item => item.id === promo.productId && item.qty >= 2);
+                } else if (promo.type === 'bundle') {
+                    return promo.bundleProducts.every(pid => cart.some(item => item.id === pid));
+                } else if (promo.type === 'timebased' || promo.type === 'seasonal') {
+                    if (promo.applyTo === 'all') return true;
+                    if (promo.applyTo === 'category') {
+                        return cart.some(item => {
+                            const product = products.find(p => p.id === item.id);
+                            return product && product.category === promo.category;
+                        });
+                    }
+                }
+                
+                return false;
+            });
         }
 
         function applyQuickDiscount(percentage) {
@@ -4772,8 +5162,30 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
                 discount = discountValue;
             }
             
+            // Calculate promotion discount (simplified for transaction recording)
+            let promotionDiscount = 0;
+            const activePromotions = checkActivePromotions();
+            
+            // Calculate coupon discount
+            let couponDiscount = 0;
+            if (appliedCoupon) {
+                const amountForCoupon = subtotal - discount - promotionDiscount;
+                if (appliedCoupon.discountType === 'percentage') {
+                    couponDiscount = (amountForCoupon * appliedCoupon.discountValue) / 100;
+                } else {
+                    couponDiscount = appliedCoupon.discountValue;
+                }
+                
+                // Increment coupon usage
+                const couponIndex = promotions.findIndex(p => p.id === appliedCoupon.id);
+                if (couponIndex !== -1) {
+                    promotions[couponIndex].usedCount = (promotions[couponIndex].usedCount || 0) + 1;
+                    localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(promotions));
+                }
+            }
+            
             const taxRate = parseFloat(document.getElementById('taxType').value) || 0;
-            const amountAfterDiscount = subtotal - discount;
+            const amountAfterDiscount = subtotal - discount - promotionDiscount - couponDiscount;
             const tax = (amountAfterDiscount * taxRate) / 100;
             const total = amountAfterDiscount + tax;
 
@@ -4801,6 +5213,9 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
                 discount: discount,
                 discountType: discountType,
                 discountValue: discountValue,
+                promotionDiscount: promotionDiscount,
+                couponDiscount: couponDiscount,
+                couponCode: appliedCoupon ? appliedCoupon.couponCode : null,
                 tax: tax,
                 taxRate: taxRate,
                 total: total,
@@ -4816,6 +5231,7 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
 
             // Reset form
             cart = [];
+            appliedCoupon = null;
             document.getElementById('customerName').value = '';
             document.getElementById('customerPhone').value = '';
             document.getElementById('discountType').value = 'none';
@@ -4837,6 +5253,8 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
         function showReceipt(transaction) {
             const subtotal = transaction.subtotal;
             const discount = transaction.discount || 0;
+            const promotionDiscount = transaction.promotionDiscount || 0;
+            const couponDiscount = transaction.couponDiscount || 0;
             const tax = transaction.tax || 0;
             const total = transaction.total;
             const customerName = transaction.customerName || 'Walk-in Customer';
@@ -4878,6 +5296,18 @@ Low Stock: ${products.filter(p => p.qty > 0 && p.qty <= 10).length}
                         <div class="receipt-total-row" style="color: var(--success);">
                             <span>Discount:</span>
                             <span>-${formatCurrency(discount)}</span>
+                        </div>
+                    ` : ''}
+                    ${promotionDiscount > 0 ? `
+                        <div class="receipt-total-row" style="color: var(--success);">
+                            <span>🎁 Promotion:</span>
+                            <span>-${formatCurrency(promotionDiscount)}</span>
+                        </div>
+                    ` : ''}
+                    ${couponDiscount > 0 ? `
+                        <div class="receipt-total-row" style="color: var(--success);">
+                            <span>🎫 Coupon (${transaction.couponCode}):</span>
+                            <span>-${formatCurrency(couponDiscount)}</span>
                         </div>
                     ` : ''}
                     ${tax > 0 ? `
@@ -6395,6 +6825,560 @@ TOTAL PAID: ${formatCurrency(total)}
             localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
             filterExpensesByPeriod('month');
             alert('✅ Expense deleted successfully!');
+        }
+
+        // ===== PROMOTION MANAGEMENT =====
+        function renderPromotions() {
+            updatePromotionStats();
+            displayPromotions();
+        }
+
+        function updatePromotionStats() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            const activePromotions = promotions.filter(promo => {
+                if (!promo.active) return false;
+                const start = new Date(promo.startDate);
+                const end = new Date(promo.endDate);
+                end.setHours(23, 59, 59, 999);
+                
+                if (now < start || now > end) return false;
+                
+                // Check time-based promotions
+                if (promo.type === 'timebased' && promo.timeRange) {
+                    const [startH, startM] = promo.timeRange.start.split(':').map(Number);
+                    const [endH, endM] = promo.timeRange.end.split(':').map(Number);
+                    const startMinutes = startH * 60 + startM;
+                    const endMinutes = endH * 60 + endM;
+                    if (currentTime < startMinutes || currentTime > endMinutes) return false;
+                }
+                
+                return true;
+            }).length;
+            
+            const upcomingPromotions = promotions.filter(promo => {
+                const start = new Date(promo.startDate);
+                return promo.active && start > now;
+            }).length;
+            
+            const expiredPromotions = promotions.filter(promo => {
+                const end = new Date(promo.endDate);
+                end.setHours(23, 59, 59, 999);
+                return end < now;
+            }).length;
+            
+            const totalDiscountGiven = transactions.reduce((sum, trans) => {
+                return sum + (trans.promotionDiscount || 0) + (trans.couponDiscount || 0);
+            }, 0);
+            
+            document.getElementById('totalPromotionsCount').textContent = promotions.length;
+            document.getElementById('activePromotionsCount').textContent = activePromotions;
+            document.getElementById('upcomingPromotionsCount').textContent = upcomingPromotions;
+            document.getElementById('totalDiscountGiven').textContent = formatCurrency(totalDiscountGiven);
+        }
+
+        function displayPromotions() {
+            const container = document.getElementById('promotionsList');
+            if (promotions.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray);">📭 No promotions yet. Create one to get started!</div>';
+                return;
+            }
+            
+            const now = new Date();
+            
+            const sortedPromotions = [...promotions].sort((a, b) => {
+                const aStart = new Date(a.startDate);
+                const bStart = new Date(b.startDate);
+                return bStart - aStart;
+            });
+            
+            container.innerHTML = sortedPromotions.map(promo => {
+                const start = new Date(promo.startDate);
+                const end = new Date(promo.endDate);
+                end.setHours(23, 59, 59, 999);
+                
+                let status = '';
+                let statusClass = '';
+                if (now < start) {
+                    status = 'Upcoming';
+                    statusClass = 'upcoming';
+                } else if (now > end) {
+                    status = 'Expired';
+                    statusClass = 'expired';
+                } else {
+                    status = promo.active ? 'Active' : 'Inactive';
+                    statusClass = promo.active ? 'active' : 'inactive';
+                }
+                
+                let typeIcon = '';
+                let typeName = '';
+                switch(promo.type) {
+                    case 'bogo': typeIcon = '🎁'; typeName = 'BOGO'; break;
+                    case 'bundle': typeIcon = '📦'; typeName = 'Bundle'; break;
+                    case 'timebased': typeIcon = '⏰'; typeName = 'Time-Based'; break;
+                    case 'seasonal': typeIcon = '🎉'; typeName = 'Seasonal'; break;
+                    case 'coupon': typeIcon = '🎫'; typeName = 'Coupon'; break;
+                }
+                
+                return `
+                    <div class="promo-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                    <span style="font-size: 1.3rem;">${typeIcon}</span>
+                                    <h3 style="margin: 0; font-size: 1.1rem;">${promo.name}</h3>
+                                </div>
+                                <span class="promo-badge promo-badge-${statusClass}">${status}</span>
+                                <span class="promo-badge" style="background: var(--light-gray); color: var(--dark);">${typeName}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <button onclick="editPromotion(${promo.id})" style="padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 6px;">✏️ Edit</button>
+                                <button onclick="deletePromotion(${promo.id})" style="padding: 6px 12px; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️</button>
+                            </div>
+                        </div>
+                        ${promo.description ? `<p style="margin: 8px 0; color: var(--gray); font-size: 0.9rem;">${promo.description}</p>` : ''}
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; font-size: 0.9rem;">
+                            <div><strong>📅 Start:</strong> ${formatDate(promo.startDate)}</div>
+                            <div><strong>📅 End:</strong> ${formatDate(promo.endDate)}</div>
+                            ${promo.type === 'coupon' ? `
+                                <div><strong>🎫 Code:</strong> <code style="background: var(--light-gray); padding: 2px 8px; border-radius: 4px; font-weight: 600;">${promo.couponCode}</code></div>
+                                <div><strong>📊 Uses:</strong> ${promo.usedCount || 0}${promo.maxUses > 0 ? ` / ${promo.maxUses}` : ' (unlimited)'}</div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showPromotionModal(type) {
+            const modal = document.getElementById('promotionModal');
+            const titleMap = {
+                'bogo': '🎁 Create BOGO Offer',
+                'bundle': '📦 Create Bundle Deal',
+                'timebased': '⏰ Create Happy Hour',
+                'seasonal': '🎉 Create Seasonal Sale',
+                'coupon': '🎫 Create Coupon Code'
+            };
+            
+            document.getElementById('promotionModalTitle').textContent = titleMap[type] || '🎁 Create Promotion';
+            document.getElementById('promotionId').value = '';
+            document.getElementById('promotionType').value = type;
+            
+            // Reset form
+            document.getElementById('promotionName').value = '';
+            document.getElementById('promotionStartDate').value = new Date().toISOString().split('T')[0];
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            document.getElementById('promotionEndDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('promotionDescription').value = '';
+            
+            // Hide all type-specific fields
+            document.getElementById('bogoFields').style.display = 'none';
+            document.getElementById('bundleFields').style.display = 'none';
+            document.getElementById('timebasedFields').style.display = 'none';
+            document.getElementById('seasonalFields').style.display = 'none';
+            document.getElementById('couponFields').style.display = 'none';
+            
+            // Show relevant fields and populate
+            switch(type) {
+                case 'bogo':
+                    document.getElementById('bogoFields').style.display = 'block';
+                    populateProductSelect('bogoProduct');
+                    document.getElementById('bogoType').value = 'free';
+                    break;
+                case 'bundle':
+                    document.getElementById('bundleFields').style.display = 'block';
+                    populateBundleProducts();
+                    document.getElementById('bundleDiscount').value = '';
+                    document.getElementById('bundlePrice').value = '';
+                    break;
+                case 'timebased':
+                    document.getElementById('timebasedFields').style.display = 'block';
+                    document.getElementById('timebasedStartTime').value = '17:00';
+                    document.getElementById('timebasedEndTime').value = '20:00';
+                    document.getElementById('timebasedDiscount').value = '';
+                    document.getElementById('timebasedApplyTo').value = 'all';
+                    document.getElementById('timebasedCategoryDiv').style.display = 'none';
+                    populateCategorySelect('timebasedCategory');
+                    break;
+                case 'seasonal':
+                    document.getElementById('seasonalFields').style.display = 'block';
+                    document.getElementById('seasonalEvent').value = 'summer';
+                    document.getElementById('seasonalDiscount').value = '';
+                    document.getElementById('seasonalApplyTo').value = 'all';
+                    document.getElementById('seasonalCategoryDiv').style.display = 'none';
+                    document.getElementById('customEventDiv').style.display = 'none';
+                    populateCategorySelect('seasonalCategory');
+                    break;
+                case 'coupon':
+                    document.getElementById('couponFields').style.display = 'block';
+                    document.getElementById('couponCode').value = '';
+                    document.getElementById('couponDiscountType').value = 'percentage';
+                    document.getElementById('couponDiscountValue').value = '';
+                    document.getElementById('couponMinPurchase').value = '0';
+                    document.getElementById('couponMaxUses').value = '0';
+                    break;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closePromotionModal() {
+            document.getElementById('promotionModal').style.display = 'none';
+        }
+
+        function populateProductSelect(selectId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">-- Select Product --</option>' + 
+                products.map(p => `<option value="${p.id}">${p.name} - ${formatCurrency(p.price)}</option>`).join('');
+        }
+
+        function populateBundleProducts() {
+            const container = document.getElementById('bundleProductsList');
+            container.innerHTML = products.map(p => `
+                <label style="display: block; padding: 8px; cursor: pointer; border-radius: 6px; margin-bottom: 6px;" onmouseover="this.style.background='var(--light-gray)'" onmouseout="this.style.background='white'">
+                    <input type="checkbox" name="bundleProducts" value="${p.id}" style="margin-right: 8px;">
+                    <span>${p.icon} ${p.name} - ${formatCurrency(p.price)}</span>
+                </label>
+            `).join('');
+        }
+
+        function populateCategorySelect(selectId) {
+            const select = document.getElementById(selectId);
+            const categories = JSON.parse(localStorage.getItem(STORAGE_KEYS.CATEGORIES)) || ['Groceries', 'Beverages', 'Snacks', 'Personal Care', 'Household'];
+            select.innerHTML = '<option value="">-- Select Category --</option>' + 
+                categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        // Event listeners for dynamic fields
+        document.getElementById('timebasedApplyTo')?.addEventListener('change', function() {
+            document.getElementById('timebasedCategoryDiv').style.display = this.value === 'category' ? 'block' : 'none';
+        });
+
+        document.getElementById('seasonalApplyTo')?.addEventListener('change', function() {
+            document.getElementById('seasonalCategoryDiv').style.display = this.value === 'category' ? 'block' : 'none';
+        });
+
+        document.getElementById('seasonalEvent')?.addEventListener('change', function() {
+            document.getElementById('customEventDiv').style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+
+        function generateCouponCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('couponCode').value = code;
+        }
+
+        function savePromotion() {
+            const id = document.getElementById('promotionId').value;
+            const type = document.getElementById('promotionType').value;
+            const name = document.getElementById('promotionName').value.trim();
+            const startDate = document.getElementById('promotionStartDate').value;
+            const endDate = document.getElementById('promotionEndDate').value;
+            const description = document.getElementById('promotionDescription').value.trim();
+            
+            if (!name || !startDate || !endDate) {
+                alert('❌ Please fill in all required fields!');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                alert('❌ Start date must be before end date!');
+                return;
+            }
+            
+            const promotion = {
+                id: id ? parseInt(id) : Date.now(),
+                type,
+                name,
+                startDate,
+                endDate,
+                description,
+                active: true,
+                createdAt: id ? (promotions.find(p => p.id === parseInt(id))?.createdAt || new Date().toISOString()) : new Date().toISOString()
+            };
+            
+            // Type-specific data
+            switch(type) {
+                case 'bogo':
+                    const bogoProductId = document.getElementById('bogoProduct').value;
+                    const bogoType = document.getElementById('bogoType').value;
+                    if (!bogoProductId) {
+                        alert('❌ Please select a product!');
+                        return;
+                    }
+                    promotion.productId = parseInt(bogoProductId);
+                    promotion.bogoType = bogoType;
+                    break;
+                    
+                case 'bundle':
+                    const bundleProducts = Array.from(document.querySelectorAll('input[name="bundleProducts"]:checked')).map(cb => parseInt(cb.value));
+                    const bundleDiscount = parseFloat(document.getElementById('bundleDiscount').value);
+                    const bundlePrice = parseFloat(document.getElementById('bundlePrice').value);
+                    
+                    if (bundleProducts.length < 2) {
+                        alert('❌ Please select at least 2 products for a bundle!');
+                        return;
+                    }
+                    if (!bundlePrice && (!bundleDiscount || bundleDiscount <= 0)) {
+                        alert('❌ Please enter a valid discount or bundle price!');
+                        return;
+                    }
+                    
+                    promotion.bundleProducts = bundleProducts;
+                    if (bundlePrice > 0) {
+                        promotion.bundlePrice = bundlePrice;
+                    } else {
+                        promotion.bundleDiscount = bundleDiscount;
+                    }
+                    break;
+                    
+                case 'timebased':
+                    const timeStart = document.getElementById('timebasedStartTime').value;
+                    const timeEnd = document.getElementById('timebasedEndTime').value;
+                    const timeDiscount = parseFloat(document.getElementById('timebasedDiscount').value);
+                    const timeApplyTo = document.getElementById('timebasedApplyTo').value;
+                    
+                    if (!timeStart || !timeEnd || !timeDiscount || timeDiscount <= 0) {
+                        alert('❌ Please fill in all time-based fields!');
+                        return;
+                    }
+                    
+                    promotion.timeRange = { start: timeStart, end: timeEnd };
+                    promotion.discount = timeDiscount;
+                    promotion.applyTo = timeApplyTo;
+                    if (timeApplyTo === 'category') {
+                        const category = document.getElementById('timebasedCategory').value;
+                        if (!category) {
+                            alert('❌ Please select a category!');
+                            return;
+                        }
+                        promotion.category = category;
+                    }
+                    break;
+                    
+                case 'seasonal':
+                    const seasonalEvent = document.getElementById('seasonalEvent').value;
+                    const seasonalDiscount = parseFloat(document.getElementById('seasonalDiscount').value);
+                    const seasonalApplyTo = document.getElementById('seasonalApplyTo').value;
+                    
+                    if (!seasonalDiscount || seasonalDiscount <= 0) {
+                        alert('❌ Please enter a valid discount!');
+                        return;
+                    }
+                    
+                    promotion.event = seasonalEvent === 'custom' ? document.getElementById('customEventName').value.trim() : seasonalEvent;
+                    promotion.discount = seasonalDiscount;
+                    promotion.applyTo = seasonalApplyTo;
+                    if (seasonalApplyTo === 'category') {
+                        const category = document.getElementById('seasonalCategory').value;
+                        if (!category) {
+                            alert('❌ Please select a category!');
+                            return;
+                        }
+                        promotion.category = category;
+                    }
+                    break;
+                    
+                case 'coupon':
+                    const couponCode = document.getElementById('couponCode').value.trim().toUpperCase();
+                    const couponDiscountType = document.getElementById('couponDiscountType').value;
+                    const couponDiscountValue = parseFloat(document.getElementById('couponDiscountValue').value);
+                    const couponMinPurchase = parseFloat(document.getElementById('couponMinPurchase').value) || 0;
+                    const couponMaxUses = parseInt(document.getElementById('couponMaxUses').value) || 0;
+                    
+                    if (!couponCode || !couponDiscountValue || couponDiscountValue <= 0) {
+                        alert('❌ Please fill in all coupon fields!');
+                        return;
+                    }
+                    
+                    // Check for duplicate coupon code
+                    const existingCoupon = promotions.find(p => 
+                        p.type === 'coupon' && 
+                        p.couponCode === couponCode && 
+                        p.id !== promotion.id
+                    );
+                    if (existingCoupon) {
+                        alert('❌ This coupon code already exists!');
+                        return;
+                    }
+                    
+                    promotion.couponCode = couponCode;
+                    promotion.discountType = couponDiscountType;
+                    promotion.discountValue = couponDiscountValue;
+                    promotion.minPurchase = couponMinPurchase;
+                    promotion.maxUses = couponMaxUses;
+                    promotion.usedCount = id ? (promotions.find(p => p.id === parseInt(id))?.usedCount || 0) : 0;
+                    break;
+            }
+            
+            // Save promotion
+            if (id) {
+                const index = promotions.findIndex(p => p.id === parseInt(id));
+                promotions[index] = promotion;
+            } else {
+                promotions.push(promotion);
+            }
+            
+            localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(promotions));
+            closePromotionModal();
+            renderPromotions();
+            alert('✅ Promotion saved successfully!');
+        }
+
+        function editPromotion(id) {
+            const promo = promotions.find(p => p.id === id);
+            if (!promo) return;
+            
+            showPromotionModal(promo.type);
+            
+            document.getElementById('promotionId').value = promo.id;
+            document.getElementById('promotionName').value = promo.name;
+            document.getElementById('promotionStartDate').value = promo.startDate;
+            document.getElementById('promotionEndDate').value = promo.endDate;
+            document.getElementById('promotionDescription').value = promo.description || '';
+            
+            // Load type-specific data
+            switch(promo.type) {
+                case 'bogo':
+                    document.getElementById('bogoProduct').value = promo.productId;
+                    document.getElementById('bogoType').value = promo.bogoType;
+                    break;
+                case 'bundle':
+                    promo.bundleProducts.forEach(pid => {
+                        const checkbox = document.querySelector(`input[name="bundleProducts"][value="${pid}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                    document.getElementById('bundleDiscount').value = promo.bundleDiscount || '';
+                    document.getElementById('bundlePrice').value = promo.bundlePrice || '';
+                    break;
+                case 'timebased':
+                    document.getElementById('timebasedStartTime').value = promo.timeRange.start;
+                    document.getElementById('timebasedEndTime').value = promo.timeRange.end;
+                    document.getElementById('timebasedDiscount').value = promo.discount;
+                    document.getElementById('timebasedApplyTo').value = promo.applyTo;
+                    if (promo.applyTo === 'category') {
+                        document.getElementById('timebasedCategoryDiv').style.display = 'block';
+                        document.getElementById('timebasedCategory').value = promo.category;
+                    }
+                    break;
+                case 'seasonal':
+                    document.getElementById('seasonalEvent').value = promo.event;
+                    document.getElementById('seasonalDiscount').value = promo.discount;
+                    document.getElementById('seasonalApplyTo').value = promo.applyTo;
+                    if (promo.applyTo === 'category') {
+                        document.getElementById('seasonalCategoryDiv').style.display = 'block';
+                        document.getElementById('seasonalCategory').value = promo.category;
+                    }
+                    break;
+                case 'coupon':
+                    document.getElementById('couponCode').value = promo.couponCode;
+                    document.getElementById('couponDiscountType').value = promo.discountType;
+                    document.getElementById('couponDiscountValue').value = promo.discountValue;
+                    document.getElementById('couponMinPurchase').value = promo.minPurchase;
+                    document.getElementById('couponMaxUses').value = promo.maxUses;
+                    break;
+            }
+        }
+
+        function deletePromotion(id) {
+            if (!confirm('Are you sure you want to delete this promotion?')) return;
+            
+            promotions = promotions.filter(p => p.id !== id);
+            localStorage.setItem(STORAGE_KEYS.PROMOTIONS, JSON.stringify(promotions));
+            renderPromotions();
+            alert('✅ Promotion deleted successfully!');
+        }
+
+        // ===== COUPON APPLICATION =====
+        function showApplyCouponModal() {
+            if (cart.length === 0) {
+                alert('❌ Cart is empty! Add products first.');
+                return;
+            }
+            document.getElementById('applyCouponModal').style.display = 'flex';
+            document.getElementById('applyCouponCode').value = '';
+            document.getElementById('couponMessage').style.display = 'none';
+            document.getElementById('applyCouponCode').focus();
+        }
+
+        function closeApplyCouponModal() {
+            document.getElementById('applyCouponModal').style.display = 'none';
+        }
+
+        function applyCouponCode() {
+            const code = document.getElementById('applyCouponCode').value.trim().toUpperCase();
+            const messageDiv = document.getElementById('couponMessage');
+            
+            if (!code) {
+                messageDiv.textContent = '❌ Please enter a coupon code!';
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#fee';
+                messageDiv.style.color = 'var(--danger)';
+                return;
+            }
+            
+            // Find coupon
+            const now = new Date();
+            const coupon = promotions.find(p => {
+                if (p.type !== 'coupon' || !p.active || p.couponCode !== code) return false;
+                
+                const start = new Date(p.startDate);
+                const end = new Date(p.endDate);
+                end.setHours(23, 59, 59, 999);
+                
+                if (now < start || now > end) return false;
+                
+                // Check max uses
+                if (p.maxUses > 0 && p.usedCount >= p.maxUses) return false;
+                
+                return true;
+            });
+            
+            if (!coupon) {
+                messageDiv.textContent = '❌ Invalid or expired coupon code!';
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#fee';
+                messageDiv.style.color = 'var(--danger)';
+                return;
+            }
+            
+            // Check minimum purchase
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            if (coupon.minPurchase > 0 && subtotal < coupon.minPurchase) {
+                messageDiv.textContent = `❌ Minimum purchase of ${formatCurrency(coupon.minPurchase)} required!`;
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#fee';
+                messageDiv.style.color = 'var(--danger)';
+                return;
+            }
+            
+            // Apply coupon
+            appliedCoupon = coupon;
+            messageDiv.textContent = `✅ Coupon "${code}" applied successfully!`;
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = '#efe';
+            messageDiv.style.color = 'var(--success)';
+            
+            calculateBill();
+            
+            setTimeout(() => {
+                closeApplyCouponModal();
+            }, 1500);
+        }
+
+        function removeCoupon() {
+            if (!appliedCoupon) return;
+            
+            if (confirm('Remove applied coupon?')) {
+                appliedCoupon = null;
+                calculateBill();
+            }
         }
 
         // ===== SUPPLIER MANAGEMENT =====
